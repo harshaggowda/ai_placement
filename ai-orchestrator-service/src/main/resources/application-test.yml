@@ -1,0 +1,4 @@
+# Test profile — quiet logging for context/slice tests.
+logging:
+  level:
+    com.careeros: INFO

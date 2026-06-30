@@ -1,0 +1,70 @@
+# =============================================================================
+# CareerOS AI — shared baseline configuration (profile-independent)
+#
+# Shipped inside the careeros-common library and pulled into each service via:
+#   spring:
+#     config:
+#       import: "classpath:application-common.yml"
+#
+# Services add ONLY what is unique to them (datasource, server.port, app name).
+# Datasources are intentionally NOT defined here — each service owns its own DB.
+# =============================================================================
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
+
+  # Jackson behaviour is configured programmatically and platform-wide in
+  # com.careeros.config.JacksonConfig (single source of truth) — not duplicated here.
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+# ---- Platform configuration bound to @ConfigurationProperties in careeros-common ----
+careeros:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:}
+      issuer: careeros-ai
+      access-token-expiration: 15m
+      refresh-token-expiration: 7d
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  cache:
+    default-ttl: 10m

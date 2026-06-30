@@ -1,0 +1,21 @@
+# Local development profile — Flyway owns the schema; Hibernate only validates it.
+spring:
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+logging:
+  level:
+    com.careeros: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# Dev-only signing key (Base64, 256-bit). Overridable via JWT_SECRET; NEVER used in prod.
+careeros:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:Y2FyZWVyb3MtYWktbG9jYWwtZGV2LWFuZC10ZXN0LXNpZ25pbmctc2VjcmV0LWtleS0yNTZiaXQ=}

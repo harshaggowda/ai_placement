@@ -1,0 +1,5 @@
+# Local development profile — verbose gateway routing/predicate diagnostics.
+logging:
+  level:
+    com.careeros: DEBUG
+    org.springframework.cloud.gateway: DEBUG

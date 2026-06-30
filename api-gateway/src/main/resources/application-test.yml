@@ -1,0 +1,5 @@
+# Test profile — quiet logging for gateway slice/context tests.
+logging:
+  level:
+    com.careeros: INFO
+    org.springframework.cloud.gateway: WARN

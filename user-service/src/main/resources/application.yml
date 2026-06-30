@@ -1,0 +1,18 @@
+# user-service — owns database `careeros_user` on its dedicated PostgreSQL instance.
+# Shared, profile-independent configuration is imported from careeros-common.
+spring:
+  application:
+    name: user-service
+  config:
+    import: "classpath:application-common.yml"
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/careeros_user}
+    username: ${DB_USERNAME:careeros}
+    password: ${DB_PASSWORD:careeros}
+    hikari:
+      pool-name: user-cp
+      maximum-pool-size: ${DB_POOL_MAX:10}
+      minimum-idle: ${DB_POOL_MIN:2}
+
+server:
+  port: ${SERVER_PORT:8082}

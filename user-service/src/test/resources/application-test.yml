@@ -1,0 +1,42 @@
+spring:
+  # Import the shared common baseline first.
+  config:
+    import: "classpath:application-common.yml"
+
+  # Flyway runs against the Testcontainers container.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+  # Disable Redis auto-configuration — not needed in tests.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+careeros:
+  security:
+    jwt:
+      # Base64 of "careeros-ai-local-dev-and-test-signing-secret-key-256bit"
+      secret: "Y2FyZWVyb3MtYWktbG9jYWwtZGV2LWFuZC10ZXN0LXNpZ25pbmctc2VjcmV0LWtleS0yNTZiaXQ="
+      issuer: "careeros-ai"
+      access-token-expiration: 15m
+      refresh-token-expiration: 7d
+    cors:
+      allowed-origins: "http://localhost:3000"
+
+logging:
+  level:
+    root: WARN
+    com.careeros: INFO
+    org.flywaydb: INFO
+    org.testcontainers: WARN

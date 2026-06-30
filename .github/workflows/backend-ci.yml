@@ -1,0 +1,42 @@
+# JVM reactor CI — builds the shared-libraries modules + all Spring services in dependency order.
+name: backend-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "pom.xml"
+      - "shared-libraries/**"
+      - "api-gateway/**"
+      - "auth-service/**"
+      - "user-service/**"
+      - "career-service/**"
+      - "payment-service/**"
+      - "ai-orchestrator-service/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "pom.xml"
+      - "shared-libraries/**"
+      - "api-gateway/**"
+      - "auth-service/**"
+      - "user-service/**"
+      - "career-service/**"
+      - "payment-service/**"
+      - "ai-orchestrator-service/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      # Reactor build: dependency order ensures shared-libraries build before dependent services.
+      - name: Build & test
+        run: mvn -B verify

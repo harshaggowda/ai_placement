@@ -1,0 +1,238 @@
+# =============================================================================
+# CareerOS AI — local orchestration of the full platform.
+#
+#   docker compose -f infrastructure/docker/docker-compose.yml up -d
+#
+# Topology (database-per-service — never shared):
+#   public edge ......... api-gateway            :8080  (only port a browser should hit)
+#   JVM services ........ auth/user/career/payment/ai-orchestrator
+#   AI service .......... ai-service (FastAPI)    :8000  (reached only via ai-orchestrator-service)
+#   datastores .......... one Postgres per stateful service + ONE shared Redis cache
+#   admin ............... pgAdmin                 :5050
+#
+# JVM images build from the REPOSITORY ROOT context so the Maven reactor can resolve
+# careeros-common. Values come from infrastructure/docker/.env (see .env.example at repo root).
+# =============================================================================
+name: careeros
+
+x-jvm-build: &jvm-build
+  # All JVM service Dockerfiles expect the repo root as build context.
+  context: ../..
+
+services:
+  # ----------------------------------------------------------------------- #
+  # Datastores — one PostgreSQL instance per service that owns data.         #
+  # ----------------------------------------------------------------------- #
+  postgres-auth:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: careeros_auth
+      POSTGRES_USER: ${DB_USERNAME:-careeros}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-careeros}
+    ports: ["5433:5432"]
+    volumes: ["pgdata-auth:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-careeros} -d careeros_auth"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [careeros-net]
+
+  postgres-user:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: careeros_user
+      POSTGRES_USER: ${DB_USERNAME:-careeros}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-careeros}
+    ports: ["5434:5432"]
+    volumes: ["pgdata-user:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-careeros} -d careeros_user"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [careeros-net]
+
+  postgres-career:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: careeros_career
+      POSTGRES_USER: ${DB_USERNAME:-careeros}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-careeros}
+    ports: ["5435:5432"]
+    volumes: ["pgdata-career:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-careeros} -d careeros_career"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [careeros-net]
+
+  postgres-payment:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: careeros_payment
+      POSTGRES_USER: ${DB_USERNAME:-careeros}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-careeros}
+    ports: ["5436:5432"]
+    volumes: ["pgdata-payment:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-careeros} -d careeros_payment"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [careeros-net]
+
+  # Shared cache only — never used as a system of record.
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: ["redisdata:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [careeros-net]
+
+  # ----------------------------------------------------------------------- #
+  # Edge — the only public-facing port.                                      #
+  # ----------------------------------------------------------------------- #
+  api-gateway:
+    build:
+      <<: *jvm-build
+      dockerfile: api-gateway/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      AUTH_SERVICE_URI: http://auth-service:8081
+      USER_SERVICE_URI: http://user-service:8082
+      CAREER_SERVICE_URI: http://career-service:8083
+      PAYMENT_SERVICE_URI: http://payment-service:8084
+      AI_ORCHESTRATOR_SERVICE_URI: http://ai-orchestrator-service:8085
+    ports: ["8080:8080"]
+    depends_on: [auth-service, user-service, career-service, payment-service, ai-orchestrator-service]
+    networks: [careeros-net]
+
+  # ----------------------------------------------------------------------- #
+  # JVM business services — each with its own database.                      #
+  # ----------------------------------------------------------------------- #
+  auth-service:
+    build:
+      <<: *jvm-build
+      dockerfile: auth-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://postgres-auth:5432/careeros_auth
+      DB_USERNAME: ${DB_USERNAME:-careeros}
+      DB_PASSWORD: ${DB_PASSWORD:-careeros}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-}
+    depends_on:
+      postgres-auth: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    networks: [careeros-net]
+
+  user-service:
+    build:
+      <<: *jvm-build
+      dockerfile: user-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://postgres-user:5432/careeros_user
+      DB_USERNAME: ${DB_USERNAME:-careeros}
+      DB_PASSWORD: ${DB_PASSWORD:-careeros}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-}
+    depends_on:
+      postgres-user: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    networks: [careeros-net]
+
+  career-service:
+    build:
+      <<: *jvm-build
+      dockerfile: career-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://postgres-career:5432/careeros_career
+      DB_USERNAME: ${DB_USERNAME:-careeros}
+      DB_PASSWORD: ${DB_PASSWORD:-careeros}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-}
+    depends_on:
+      postgres-career: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    networks: [careeros-net]
+
+  payment-service:
+    build:
+      <<: *jvm-build
+      dockerfile: payment-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://postgres-payment:5432/careeros_payment
+      DB_USERNAME: ${DB_USERNAME:-careeros}
+      DB_PASSWORD: ${DB_PASSWORD:-careeros}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-}
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    depends_on:
+      postgres-payment: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    networks: [careeros-net]
+
+  # ----------------------------------------------------------------------- #
+  # AI bridge (Spring) + AI service (FastAPI). No database on the bridge.    #
+  # ----------------------------------------------------------------------- #
+  ai-orchestrator-service:
+    build:
+      <<: *jvm-build
+      dockerfile: ai-orchestrator-service/Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_SERVICE_API_KEY: ${AI_SERVICE_API_KEY:-}
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-}
+    depends_on: [ai-service]
+    networks: [careeros-net]
+
+  ai-service:
+    build:
+      context: ../../ai-service
+      dockerfile: Dockerfile
+    environment:
+      AI_ENVIRONMENT: ${SPRING_PROFILES_ACTIVE:-dev}
+      AI_API_KEY: ${AI_SERVICE_API_KEY:-}
+      AI_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    networks: [careeros-net]
+
+  # ----------------------------------------------------------------------- #
+  # Admin tooling.                                                           #
+  # ----------------------------------------------------------------------- #
+  pgadmin:
+    image: dpage/pgadmin4:8
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@careeros.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports: ["5050:80"]
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - pgadmindata:/var/lib/pgadmin
+    depends_on: [postgres-auth, postgres-user, postgres-career, postgres-payment]
+    networks: [careeros-net]
+
+networks:
+  careeros-net:
+    driver: bridge
+
+volumes:
+  pgdata-auth:
+  pgdata-user:
+  pgdata-career:
+  pgdata-payment:
+  redisdata:
+  pgadmindata:

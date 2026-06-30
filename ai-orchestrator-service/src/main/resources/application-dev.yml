@@ -1,0 +1,4 @@
+# Local development profile — verbose diagnostics for downstream AI calls.
+logging:
+  level:
+    com.careeros: DEBUG

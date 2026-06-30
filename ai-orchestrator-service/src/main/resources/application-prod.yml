@@ -1,0 +1,5 @@
+# Production profile — lean logging.
+logging:
+  level:
+    root: INFO
+    com.careeros: INFO

@@ -1,0 +1,45 @@
+# ---- Build output ----
+target/
+build/
+out/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ---- IDE ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- Secrets & local env ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---- Maven ----
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties.bak
+
+# ---- Python ----
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# ---- Node ----
+node_modules/
+

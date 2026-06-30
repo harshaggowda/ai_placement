@@ -1,0 +1,17 @@
+# ai-orchestrator-service — stateless bridge to the FastAPI AI service. No database.
+spring:
+  application:
+    name: ai-orchestrator-service
+  config:
+    import: "classpath:application-common.yml"
+
+server:
+  port: ${SERVER_PORT:8085}
+
+careeros:
+  ai-service:
+    base-url: ${AI_SERVICE_URL:http://localhost:8000}
+    connect-timeout: 2s
+    read-timeout: 60s
+    max-retries: 2
+    api-key: ${AI_SERVICE_API_KEY:}

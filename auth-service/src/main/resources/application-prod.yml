@@ -1,0 +1,10 @@
+# Production profile — schema is migration-managed; Hibernate validates only.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+logging:
+  level:
+    root: INFO
+    com.careeros: INFO

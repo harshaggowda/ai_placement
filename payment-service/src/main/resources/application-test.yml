@@ -1,0 +1,10 @@
+# Test profile — ephemeral schema for integration tests.
+# The datasource is supplied by Testcontainers (@DynamicPropertySource) at test time.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+logging:
+  level:
+    com.careeros: INFO

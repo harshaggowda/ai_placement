@@ -1,0 +1,18 @@
+# Test profile — datasource supplied by Testcontainers (@DynamicPropertySource) at test time.
+# Flyway builds the schema in the container, exactly as in dev/prod; Hibernate validates.
+spring:
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+logging:
+  level:
+    com.careeros: INFO
+
+# Fixed test signing key (Base64, 256-bit).
+careeros:
+  security:
+    jwt:
+      secret: Y2FyZWVyb3MtYWktbG9jYWwtZGV2LWFuZC10ZXN0LXNpZ25pbmctc2VjcmV0LWtleS0yNTZiaXQ=

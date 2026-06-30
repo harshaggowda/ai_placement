@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.careeros</groupId>
+        <artifactId>careeros-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>careeros-exceptions</artifactId>
+    <name>careeros-exceptions</name>
+    <description>Error model + global exception handling: ErrorCode catalogue, application/business
+        exceptions, and the @RestControllerAdvice that maps every failure to the platform ApiResponse
+        envelope. Depends on careeros-common (envelope) and careeros-logging (trace id).</description>
+
+    <dependencies>
+        <!-- Internal shared modules. -->
+        <dependency>
+            <groupId>com.careeros</groupId>
+            <artifactId>careeros-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.careeros</groupId>
+            <artifactId>careeros-logging</artifactId>
+        </dependency>
+
+        <!-- @RestControllerAdvice / ResponseEntity / MethodArgumentNotValidException. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- ConstraintViolationException. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <!-- AccessDeniedException / AuthenticationException handlers. -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>

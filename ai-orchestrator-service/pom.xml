@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.careeros</groupId>
+        <artifactId>careeros-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>ai-orchestrator-service</artifactId>
+    <name>ai-orchestrator-service</name>
+    <description>AI Orchestrator Service — bridge between the Spring ecosystem and the FastAPI AI
+        service. Contains NO AI logic. Owns NO database. Responsible for calling FastAPI, request
+        validation, authentication forwarding, retries, timeouts, and logging.</description>
+
+    <!--
+      Deliberately depends on careeros-common WITHOUT Spring Data JPA (the library marks JPA as
+      optional, and JPA-coupled config is conditionally skipped). This service is stateless and
+      persistence-free.
+    -->
+    <dependencies>
+<!-- Shared platform kernel: envelope/entities, security baseline, exception handling, logging. -->
+        <dependency>
+            <groupId>com.careeros</groupId>
+            <artifactId>careeros-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.careeros</groupId>
+            <artifactId>careeros-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.careeros</groupId>
+            <artifactId>careeros-exceptions</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.careeros</groupId>
+            <artifactId>careeros-logging</artifactId>
+        </dependency>
+
+        <!-- Reactive HTTP client (WebClient) for streaming / non-blocking downstream calls. The app
+             stays servlet-based (starter-web wins); webflux is present only for the client. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <!-- Declarative HTTP client placeholder (OpenFeign) — enabled but no @FeignClient wired yet. -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!-- Resilience for downstream FastAPI calls (retry capability; wiring deferred). -->
+        <dependency>
+            <groupId>org.springframework.retry</groupId>
+            <artifactId>spring-retry</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>ai-orchestrator-service</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
